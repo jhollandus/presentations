@@ -1,0 +1,74 @@
+@font-face{
+  font-family: 'Droid Serif';
+  src: url('fonts/DroidSerif.ttf');
+}
+@font-face{
+  font-family: 'Yanone Kaffeesatz';
+  src: url('fonts/YanoneKaffeesatz-Regular.ttf');
+}
+@font-face{
+  font-family: 'Ubuntu Mono';
+  src: url('fonts/UbuntuMono-Regular.ttf');
+}
+
+body { font-family: 'Droid Serif'; }
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Yanone Kaffeesatz';
+  font-weight: normal;
+}
+
+.font-smaller {
+  font-size: 80%;
+}
+
+.remark-slide-content h1 {
+  font-size: 3.25em;
+  color: #FFFFFF;
+}
+
+.remark-slide-content {
+  display: table-cell;
+  vertical-align: middle;
+  padding: 4% 4em;
+  font-size: 1.5em;
+}
+
+.remark-slide-content h2 {
+  font-size: 3em;
+}
+
+.remark-slide-content h3 {
+  font-size: 2.75em;
+  -webkit-margin-before: 0.1em;
+  -webkit-margin-after: 0.1em;
+  -webkit-margin-start: 0px;
+  -webkit-margin-end: 0px;
+
+}
+
+.remark-slide-content h4 {
+  font-size: 2.5em;
+  -webkit-margin-before: 0.1em;
+  -webkit-margin-after: 0.1em;
+  -webkit-margin-start: 0px;
+  -webkit-margin-end: 0px;
+}
+
+.remark-slide-content h5 {
+  -webkit-margin-before: 0.1em;
+  -webkit-margin-after: 0.1em;
+  -webkit-margin-start: 0px;
+  -webkit-margin-end: 0px;
+
+  font-size: 2.25em;
+}
+
+.remark-slide-content h6 {
+  -webkit-margin-before: 0.1em;
+  -webkit-margin-after: 0.1em;
+  -webkit-margin-start: 0px;
+  -webkit-margin-end: 0px;
+  font-size: 1.75em;
+}
+
+.remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }

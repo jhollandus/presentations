@@ -1,0 +1,28 @@
+#!/bin/bash -e
+
+if [ ! `command -v convert` ]; then
+  echo "The imagemagick command 'convert' is required."
+  exit 1
+fi
+
+mkdir -p slides/{cropped,color,final}
+
+slides_dir='slides'
+orig_slides="${slides_dir}/original"
+
+echo "Preparing $(ls ${orig_slides}/*.png | wc -l) slides"
+
+for i in $( find "${orig_slides}" -name '*.png'); do
+  filename="$(basename $i | tr ' ' '_' | sed -e 's/\([^0-9]\)\([1-9]\)\([^0-9]\)/\10\2\3/g')"
+  fullpath="${orig_slides}/$filename"
+  mv "$i" "$fullpath"
+
+  convert "$fullpath" -crop 2048x942+0+120 "${slides_dir}/cropped/$filename"
+  convert "${slides_dir}/cropped/$filename" -opaque "rgb(245,244,240)" -fill white "${slides_dir}/color/$filename"
+  convert opi-template.png "${slides_dir}/color/$filename" -geometry +0+120 -composite "${slides_dir}/final/$filename"
+  convert -compress jpeg -quality 65 `ls $slides_dir/final/*.png` "${slides_dir}/pdf/full-slide-deck.pdf"
+
+
+done
+
+rm -rf slides/cropped slides/color slides/final

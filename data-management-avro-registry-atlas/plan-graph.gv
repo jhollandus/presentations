@@ -1,0 +1,38 @@
+digraph plan_graph {
+
+    rank=same
+    node[fixedsize=true width=1]
+
+subgraph db {
+    node [shape=square style="filled,rounded" fillcolor=lightgray]
+    table
+}
+
+subgraph process {
+    node [shape=circle style="filled" fillcolor=lightsalmon]
+    connect[label="JDBC\nConnector"]
+    processor[label="Stream\nProcessor"]
+    atlas_hook[label="Atlas\nHook"]
+}
+
+subgraph kafka {
+     node [shape=square style="filled,rounded" fillcolor=lightsteelblue]
+     cdc_topic[label="cdc topic"]
+     out_topic[label="processed\ntopic"]
+     _schemas
+     ATLAS_HOOK[fontsize=10]
+}
+
+    registry[shape=circle style="filled" fillcolor=lightgray label="Schema\nRegistry"]
+    atlas[shape=circle style="filled" fillcolor=lightgray label="Atlas"]
+
+    table->connect->cdc_topic->processor->out_topic
+    _schemas->atlas_hook
+    atlas_hook->ATLAS_HOOK
+
+    subgraph schema {
+      registry->_schemas
+      connect->registry[dir=none]
+      processor->registry[dir=none]
+    }
+}

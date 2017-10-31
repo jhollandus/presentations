@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Data Management with Avro, Schema Registry and Apache Atlas</title>
+    <base href=./remark/out" >
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+    <body>
+      <textarea id="source">
+
+        class: left, top
+        background-image: url(assets/opi-title-slide-bg.svg)
+
+        # Data Management with Avro, Schema Registry and Apache Atlas<sup>*</sup>
+
+        ---
+
+        layout: true
+        class: left, middle, opi-title-slide
+        background-image: url(assets/opi-slide-bg.svg)
+
+        ---
+
+        ### Why, A Story
+
+        _"Pthhh, just publish some JSON"_
+
+        ???
+        Talk about:
+
+          * cowboy json
+          * quick development
+          * growing number of services / topics
+          * 6 month pain
+          * broken downstream consumers
+          * difficulty growing due to unknown complexity
+        ---
+
+        ### Why, Really
+
+
+        __Know your data__
+        * source and definition
+
+        __Know where it's been and who it's seen__
+        * tranformation and enrichment
+
+        __Know what parts are PII/PHI__
+        * security and auditing
+
+        __Be a good neighbor__
+        * downstream integration
+
+        ---
+
+        ### Avro
+
+        __Schemas are good__
+        * well defined types, extensible
+
+        __Prepackaged with evolution in mind__
+        * compability checks: forwards, backwards, full
+
+        __Automatic compatibility resolution__
+
+        __Language bindings for all__
+        * java, .Net, python, nodejs, go ... more
+
+        ---
+
+        ### Avro Best Practices: Defaults
+
+        __ALWAYS__ set a default, all fields optional
+
+        ```json
+        {
+        "name" : "age",
+        "type" : "int",
+        "doc" : "The number of years a user has lived",
+        "default" : "-1"
+        }
+        ```
+
+        Optional using null
+        ```json
+        {
+        "name" : "age",
+        "type" : ["null", "int"],
+        "doc" : "The number of years a user has lived",
+        "default" : "null"
+        }
+        ```
+
+        ---
+
+        ### Avro Best Practices: enums & aliases
+
+        __NEVER__ an enum
+
+        * compatibility breaks with a new symbol
+
+        Aliases are not implemented across all clients
+
+        ---
+
+        ### Avro Best Practices: Doc
+
+        __ALWAYS__ add docs to your types/fields
+
+        * Make it meaningful
+        * Can be parsed to documentation (e.g. avrodoc tool)
+
+        ---
+
+        ### Avro Best Practices: Build Lint
+
+        Validate your constraints at build time.
+
+        * build fails if any contraints do
+        * perform compatibility checks
+
+        ???
+        Mention you can either hit a lower env schema registry or pull from git history.
+        ---
+
+        ### Avro Best Practices: Reuse
+
+        Reuse common datatypes
+
+        * Versioned artifacts with schema archives
+        * Use simple models, avoid deep nesting
+
+        ???
+        Mention resulting schemas are comprehensive, no refs.
+        Will need to unzip archive and add to your binding sources.
+        ---
+
+        ### Avro Best Practices: Registry
+
+        Finally, use a schema registry
+
+        ???
+        Runtime availability
+        Can be used for reference
+        ---
+
+        ### Avro FYI
+
+        Avro JSON output can be unusual when unions are involved (null defaults).
+
+        ```json
+        {"age": {"int": "32"}}
+        ```
+        ---
+
+        ### Kafka with Avro
+
+        Use the schema registry
+
+        One schema per topic
+
+        Always backwards compatible
+
+        Breaking compatibility change: expand  &#10149; collapse
+
+        Avro for the key too
+
+        ---
+
+        ### Kafka Connect: Avro to S3/HDFS
+
+        __Avro works great in data lakes, good compatibility__
+
+        __Can create large files with many messages__
+        * save $$$
+
+        __Topic schema included, albeit modified__
+
+        __Works on "stream" time__
+        * low volume topics may have significant consistency delays
+
+        ???
+        Kafka connect removes all enums and replaces them with string types.
+        ---
+
+        ### Apache Atlas, A Data Governance Tool
+
+        Fairly new, version 0.8.1
+
+        Essentially maintained by Hortonworks
+
+        Uses Titan for graph, moving to JanusGraph
+
+        Kafka for notifications
+
+        HBase, Zookeeper and Elasticsearch also required.
+
+        ---
+
+        ### Apache Atlas, The What
+
+        **Tracks and records data lineage**
+
+        **Create data taxonomies**
+
+        **Tag and categorize data (PII, etc.)**
+
+        **UI and Rest API included**
+
+        **Hooks into other systems for metadata collection**
+        * Hive, HBase, Storm, etc.
+
+        _Does even more..._
+
+        ???
+        Apache Ranger for security integration
+
+        Has audit capability for security
+
+        ---
+
+        ### Kafka, Avro and Atlas
+
+        __Goal:__ I want to show people how the data flows and not be involved
+        with keeping it up to date.
+
+        .left[![The Goal](images/desired-graph.svg)]
+
+        ---
+
+        #### Integrating Kafka POC
+
+        * Integration via schema registry
+        * listen to `_schemas` topic, publish to `ATLAS_HOOK` topic
+
+        * Atlas API for the rest
+
+        <img style="position: relative; left: 25%" height="200" src="images/plan-graph.svg" />
+
+        ???
+        Using schema registry lib to perform message parsing, etc.
+
+        Must transform the _schemas data to Atlas entity updates
+
+        Using some Avro schema metadata to extract additional information (connect.name).
+
+        ---
+
+        ### Integrating Kafka POC: Metadata
+
+        Create kafka and avro specific metadata model
+
+        Example, A Kafka Connect Process
+        ```json
+        {
+          "name": "kafka_connect_process",
+          "description": "A kafka connector process",
+          "superTypes": [ "Process" ],
+          "typeVersion": "1.0",
+          "attributeDefs": [
+          {
+              "name": "cluster",
+              "typeName": "kafka_cluster",
+              "cardinality": "SINGLE",
+              "isOptional": false,
+              "isIndexable": true,
+              "isUnique": false,
+              "description": "The kafka cluster where the topic is defined"
+            }
+          ]
+        }
+        ```
+
+        ---
+
+        ### Integrating Kafka POC: JDBC Connector
+
+        Use topic naming convention to capture some metadata<br/>
+        &nbsp;&nbsp;&nbsp;&#10149;.font-smaller[_Look into using simple transform_]
+
+        [category]-[type]-[dbName]-[table] =&gt; `cdc-db-demo-accounts`
+
+        Set the connector's `topic.prefix` to include the metadata:
+        `"topic.prefix": "cdc-db-demo-"`
+
+        Extract in the hook and use to create Atlas entities:
+        ```java
+        String subject = extractTopicName(schemaValue); //from _schemas topic
+        List<String> parts = SUBJECT_SPLITTER.splitToList(subject);
+
+        String category = parts.get(0);
+        String type = parts.get(1);
+        String database  = parts.get(2);
+        String table = parts.get(3);
+        ```
+        ---
+
+        ### Integrating Kafka POC: Kafka Streams
+
+        Use Atlas API to create the kafka streams process entity.
+         * Need to lookup topics to make references
+
+        Schema registry integration will capture the topics.
+
+        Must manually specify input/output topics in stream configuration.
+
+        ```yaml
+        stream:
+          inputTopics: [topic-in-1, topic-in-2]
+          outputTopics: [topic-out]
+        ```
+        ---
+
+        ### Integrating Kafka POC: KSQL?
+
+        KSQL currently does not support avro ☹
+
+        Don't worry, support is on the agenda ☺
+
+        Perfect fit otherwise, captures the input and output topics naturally
+
+        ---
+
+        ### Demo
+
+        <img height="250"src="images/atlas_ss.png" />
+
+        ???
+
+        Go to the running system and show:
+        * lineage
+        * avro
+        * fields
+
+        Conclusion, Apache Atlas is immature but there are not many other options.
+
+        May want to look at FINRA herd or Netflix metacat.
+
+        Maybe build on top of open zipkin??
+        ---
+
+        ### Questions?
+
+      </textarea>
+      <script src="out/remark.min.js">
+      </script>
+      <script>
+var slideshow = remark.create({
+  ratio: '16:9',
+  slideNumberFormat: ''
+});
+      </script>
+    </body>
+</html>
+
